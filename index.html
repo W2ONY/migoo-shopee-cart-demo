@@ -25,7 +25,7 @@ svg{display:block}
 .hero{position:relative;background:linear-gradient(180deg,rgba(236,228,250,1) 0%,rgba(228,236,255,.85) 45%,#fff 100%);padding-top:59px}
 .hero::before{content:"";position:absolute;left:-94px;top:-183px;width:348px;height:314px;border-radius:50%;background:radial-gradient(closest-side,rgba(246,214,236,.9),rgba(246,214,236,0));pointer-events:none}
 .hero::after{content:"";position:absolute;left:108px;top:-218px;width:408px;height:295px;border-radius:50%;background:radial-gradient(closest-side,rgba(206,222,255,.95),rgba(206,222,255,0));pointer-events:none}
-.hero>*{position:relative}
+.hero>*:not(.sb){position:relative}
 .nav{height:56px;display:flex;align-items:center;padding:0 16px}
 .nav .user{width:24px;height:24px}
 .nav .tabs{position:absolute;left:99px;top:8px;height:40px;display:flex}
