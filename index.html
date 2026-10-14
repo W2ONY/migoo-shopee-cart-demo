@@ -107,6 +107,13 @@ svg{display:block}
 .hero-img .ind{position:absolute;right:12px;top:359px;width:42px;height:22px;border-radius:11px;background:rgba(0,0,0,.65);color:#fff;font-size:14px;line-height:22px;text-align:center}
 .pdp .close{position:absolute;left:16px;top:67px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3}
 .pdp .close svg{width:24px;height:24px}
+.pdp .topcart{position:absolute;right:16px;top:67px;width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;color:#fff}
+.pdp .topcart svg{width:22px;height:22px}
+.pdp .topcart.pop{animation:cpop .6s cubic-bezier(.2,.8,.2,1)}
+.pdp .topcart.pop::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:2px solid #fff;animation:cring .6s ease-out forwards}
+@keyframes cpop{0%{transform:scale(1)}30%{transform:scale(1.35)}55%{transform:scale(.92)}100%{transform:scale(1)}}
+@keyframes cring{0%{transform:scale(1);opacity:.9}100%{transform:scale(1.9);opacity:0}}
+.fly{position:absolute;z-index:50;border-radius:8px;object-fit:cover;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.25)}
 .info{padding-top:16px;display:flex;flex-direction:column;gap:16px;align-items:center}
 .info>*{width:393px}
 .sec{display:flex;flex-direction:column;gap:12px}
@@ -274,7 +281,7 @@ svg{display:block}
 <div class="note"><b>Migoo in Shopee · PDP 购物车</b>
 <p>按 Figma 草稿箱 1974-138314 的「默认」电商 tab 与「单品」PDP 还原；购物车页按同一 Section 里的 Shopee 截图还原。</p>
 <p>入口：PDP 底栏 Buy 左侧的购物车（+）、Available at 行的购物车钮、首页商品卡右下角的购物车钮 → 加购层（规格 / 数量）。</p>
-<p>加购层点 Add to Cart 后直接进入 Shopee 购物车页；购物车页左上角返回商品页。没有角标和购物车内状态。</p>
+<p>加购层点 Add to Cart 后：缩略图飞向商品页右上角的购物车钮、钮弹一下 + toast；点右上角购物车钮进入 Shopee 购物车页，左上角返回商品页。没有角标和购物车内状态。</p>
 </div>
 </div>
 <script>
@@ -391,7 +398,7 @@ function homeHTML(){
 /* ===================== PDP（按 Figma 单品） ===================== */
 function pdpHTML(id){
   const o=P[id], sel=PDPSEL;
-  return `<div class="pdp" data-id="${id}"><div class="sb"><span>9:41</span>${I.sb}</div><div class="close" data-pdp="close">${I.close}</div>
+  return `<div class="pdp" data-id="${id}"><div class="sb"><span>9:41</span>${I.sb}</div><div class="close" data-pdp="close">${I.close}</div><div class="topcart" data-cart="open" title="Cart">${I.cart}</div>
    <div class="body">
     <div class="hero-img"><img src="${o.img}" alt=""><div class="ind">1/15</div></div>
     <div class="info">
@@ -466,10 +473,20 @@ ph.innerHTML=homeHTML()+'<div class="toast"></div>';
 function toast(msg,act,fn){const t=ph.querySelector('.toast'); t.innerHTML=esc(msg)+(act?`<span class="act">${act}</span>`:''); t.classList.add('on'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('on'),act?2600:1700); t.onclick=e=>{if(e.target.closest('.act')&&fn){t.classList.remove('on');fn();}};}
 function openPDP(id){PDPSEL={}; ph.querySelector('.pdp')?.remove(); ph.querySelector('.acs')?.remove(); ph.insertAdjacentHTML('beforeend',pdpHTML(id)); requestAnimationFrame(()=>ph.querySelector('.pdp').classList.add('open'));}
 function closePDP(){const el=ph.querySelector('.pdp'); if(!el) return; el.classList.remove('open'); setTimeout(()=>el.remove(),360);}
+/* 加购动画：加购层里的缩略图缩小飞向 PDP 右上角的购物车钮，到达后钮弹一下 */
+function flyToCart(){
+  const img=ph.querySelector('.acs .top img'), tc=ph.querySelector('.pdp.open .topcart'); if(!img||!tc) return;
+  const pr=ph.getBoundingClientRect(), a=img.getBoundingClientRect(), b=tc.getBoundingClientRect();
+  const f=document.createElement('img'); f.src=img.src; f.className='fly';
+  Object.assign(f.style,{left:(a.left-pr.left)+'px',top:(a.top-pr.top)+'px',width:a.width+'px',height:a.height+'px'});
+  ph.appendChild(f);
+  const dx=(b.left+b.width/2)-(a.left+a.width/2), dy=(b.top+b.height/2)-(a.top+a.height/2), k=24/a.width;
+  f.animate([{transform:'translate(0,0) scale(1)',opacity:1,offset:0},{transform:`translate(${dx*.5}px,${dy*.5-90}px) scale(${(1+k)/2})`,opacity:1,offset:.55},{transform:`translate(${dx}px,${dy}px) scale(${k})`,opacity:.6,offset:1}],{duration:650,easing:'cubic-bezier(.3,.7,.3,1)',fill:'forwards'}).onfinish=()=>{f.remove(); tc.classList.remove('pop'); void tc.offsetWidth; tc.classList.add('pop'); setTimeout(()=>tc.classList.remove('pop'),650);};
+}
 function addToCart(sh){
   const key=c=>c.id+'|'+optsText(c.opts); const hit=CART.find(c=>key(c)===key(sh));
   if(hit) hit.qty+=sh.qty; else CART.push({id:sh.id,opts:{...sh.opts},qty:sh.qty,sel:true});
-  acsClose(); cartOpen(); toast('Added to your Shopee cart');
+  flyToCart(); acsClose(); toast('Added to your Shopee cart');
 }
 ph.addEventListener('click',e=>{
   const on=s=>e.target.closest(s); let x;
